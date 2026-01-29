@@ -605,43 +605,29 @@ if submitted and model_loaded:
             st.error(f"⚠ {f} is abnormal")
     else:
         st.success("✅ No major abnormalities detected")
-    # ------------------ SHAP Visual Explanation ------------------
+        # ------------------ SHAP Visual Explanation ------------------
 
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
 
     try:
-        # Extract trained classifier from pipeline
-        if hasattr(model, "named_steps"):
-            # Try common classifier step names
-            for key in ['classifier', 'model', 'rf', 'estimator']:
-                if key in model.named_steps:
-                    clf = model.named_steps[key]
-                    break
-            else:
-                clf = model  # fallback
-        else:
-            clf = model
+        # Use model-agnostic explainer (robust for Pipeline + Python 3.13)
+        explainer = shap.Explainer(model, input_df, algorithm="permutation")
 
-        explainer = shap.TreeExplainer(clf)
-        shap_values = explainer.shap_values(input_df)
-
-        # Binary classification → class 1 (CKD)
-        shap_val = shap_values[1]
+        shap_values = explainer(input_df)
 
         fig, ax = plt.subplots(figsize=(9, 4))
 
         shap.plots.bar(
-            shap.Explanation(
-                values=shap_val[0],
-                base_values=explainer.expected_value[1],
-                data=input_df.iloc[0],
-                feature_names=input_df.columns
-            ),
+            shap_values[0],
             max_display=12,
             show=False
         )
 
         st.pyplot(fig, use_container_width=True)
+
+    except Exception as e:
+        st.warning(f"SHAP explanation unavailable: {e}")
+
 
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
