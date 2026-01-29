@@ -612,30 +612,34 @@ if submitted and model_loaded:
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
 
     try:
-        # Extract trained classifier from pipeline
+        # -------- Extract classifier --------
         if hasattr(model, "named_steps"):
-            # Try common classifier step names
             for key in ['classifier', 'model', 'rf', 'estimator']:
                 if key in model.named_steps:
                     clf = model.named_steps[key]
                     break
             else:
-                clf = model  # fallback
+                clf = model
         else:
             clf = model
 
         explainer = shap.TreeExplainer(clf)
         shap_values = explainer.shap_values(input_df)
 
-        # Binary classification → class 1 (CKD)
-        shap_val = shap_values[1]
+        # -------- Robust class handling --------
+        if isinstance(shap_values, list):
+            shap_val = shap_values[1] if len(shap_values) > 1 else shap_values[0]
+            base_val = explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0]
+        else:
+            shap_val = shap_values
+            base_val = explainer.expected_value
 
         fig, ax = plt.subplots(figsize=(9, 4))
 
         shap.plots.bar(
             shap.Explanation(
                 values=shap_val[0],
-                base_values=explainer.expected_value[1],
+                base_values=base_val,
                 data=input_df.iloc[0],
                 feature_names=input_df.columns
             ),
@@ -644,10 +648,6 @@ if submitted and model_loaded:
         )
 
         st.pyplot(fig, use_container_width=True)
-
-    except Exception as e:
-        st.warning(f"SHAP explanation unavailable: {e}")
-
 
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
