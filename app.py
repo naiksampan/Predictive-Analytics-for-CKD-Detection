@@ -607,50 +607,53 @@ if submitted and model_loaded:
             st.error(f"⚠ {f} is abnormal")
     else:
         st.success("✅ No major abnormalities detected")
-            # ------------------ SHAP Visual Explanation ------------------
+          # ------------------ SHAP Visual Explanation ------------------
 
-    st.markdown("### 🧠 Model Explanation (SHAP Values)")
+st.markdown("### 🧠 Model Explanation (SHAP Values)")
 
-    try:
-        # -------- Extract classifier --------
-        if hasattr(model, "named_steps"):
-            for key in ['classifier', 'model', 'rf', 'estimator']:
-                if key in model.named_steps:
-                    clf = model.named_steps[key]
-                    break
-            else:
-                clf = model
+try:
+    # -------- Extract classifier --------
+    if hasattr(model, "named_steps"):
+        for key in ['classifier', 'model', 'rf', 'estimator']:
+            if key in model.named_steps:
+                clf = model.named_steps[key]
+                break
         else:
             clf = model
+    else:
+        clf = model
 
-        explainer = shap.TreeExplainer(clf)
-        shap_values = explainer.shap_values(input_df)
+    explainer = shap.TreeExplainer(clf)
+    shap_values = explainer.shap_values(input_df)
 
-        # -------- Robust class handling --------
-        if isinstance(shap_values, list):
-            shap_val = shap_values[1] if len(shap_values) > 1 else shap_values[0]
-            base_val = explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0]
-        else:
-            shap_val = shap_values
-            base_val = explainer.expected_value
+    # -------- Robust SHAP handling --------
+    if isinstance(shap_values, list):
+        shap_val = shap_values[1] if len(shap_values) > 1 else shap_values[0]
+    else:
+        shap_val = shap_values
 
-        fig, ax = plt.subplots(figsize=(9, 4))
+    base_val = explainer.expected_value
+    if isinstance(base_val, (list, tuple)):
+        base_val = base_val[1] if len(base_val) > 1 else base_val[0]
 
-        shap.plots.bar(
-            shap.Explanation(
-                values=shap_val[0],
-                base_values=base_val,
-                data=input_df.iloc[0],
-                feature_names=input_df.columns
-            ),
-            max_display=12,
-            show=False
-        )
+    fig, ax = plt.subplots(figsize=(9, 4))
 
-        st.pyplot(fig, use_container_width=True)
+    shap.plots.bar(
+        shap.Explanation(
+            values=shap_val[0],
+            base_values=base_val,
+            data=input_df.iloc[0],
+            feature_names=input_df.columns
+        ),
+        max_display=12,
+        show=False
+    )
 
-    except Exception as e:
-        st.warning(f"SHAP explanation unavailable: {e}")
+    st.pyplot(fig, use_container_width=True)
+
+except Exception as e:
+    st.warning(f"SHAP explanation unavailable: {e}")
+
 
 elif submitted and not model_loaded:
     st.error("❌ Model or scaler not loaded. Please check your files.")
