@@ -606,12 +606,12 @@ if submitted and model_loaded:
             st.error(f"⚠ {f} is abnormal")
     else:
         st.success("✅ No major abnormalities detected")
-  # ------------------ SHAP Visual Explanation ------------------
-
+     # ------------------ SHAP Visual Explanation ------------------
+    
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
     
     try:
-        # -------- Extract classifier from pipeline --------
+        # -------- Extract classifier --------
         if hasattr(model, "named_steps"):
             for key in ['classifier', 'model', 'rf', 'estimator']:
                 if key in model.named_steps:
@@ -622,25 +622,29 @@ if submitted and model_loaded:
         else:
             clf = model
     
-        # -------- Background data (very important) --------
-        background = shap.sample(input_df, 1)
+        # -------- SHAP Explainer --------
+        explainer = shap.Explainer(clf, input_df)
     
-        # -------- Stable SHAP explainer --------
-        explainer = shap.KernelExplainer(clf.predict_proba, background)
+        shap_values = explainer(input_df)
     
-        shap_values = explainer.shap_values(input_df, nsamples=100)
+        values = shap_values.values
+        base_vals = shap_values.base_values
     
-        # -------- Select class 1 (CKD) --------
-        shap_val = shap_values[1][0]
-    
-        base_val = explainer.expected_value[1]
+        # -------- Robust extraction --------
+        if values.ndim == 3:
+            pred_class = int(model.predict(input_df)[0])
+            shap_row = values[0, :, pred_class]
+            base_val = base_vals[0][pred_class]
+        else:
+            shap_row = values[0]
+            base_val = base_vals[0]
     
         # -------- Plot --------
         fig, ax = plt.subplots(figsize=(9, 4))
     
         shap.plots.bar(
             shap.Explanation(
-                values=shap_val,
+                values=shap_row,
                 base_values=base_val,
                 data=input_df.iloc[0],
                 feature_names=input_df.columns.tolist()
@@ -653,10 +657,6 @@ if submitted and model_loaded:
     
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
-
-
-
-
 
 
 elif submitted and not model_loaded:
