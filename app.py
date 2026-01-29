@@ -6,7 +6,7 @@ import seaborn as sns
 import plotly.express as px
 import joblib
 import shap
-
+shap.initjs()
 
 
 
