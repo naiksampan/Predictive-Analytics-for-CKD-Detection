@@ -63,7 +63,7 @@ The analytical approach includes systematic **data preprocessing**, **missing va
 
 - Refer to **CKD_analysis.ipynb** for full data handling, visualization, and statistical analysis.
 - Review **brief.pdf** for conceptual explanation and solution design.
-- Website: https://predictive-analytics-for-ckd-detection-rbfmz66sxuduf8ghxnkaks.streamlit.app
+- Website: https://predictive-analytics-for-ckd-detection-je9vzk6jyeqgow54w5cwdh.streamlit.app
 
 ---
 
