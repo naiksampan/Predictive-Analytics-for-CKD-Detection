@@ -6,7 +6,6 @@ import seaborn as sns
 import plotly.express as px
 import joblib
 import shap
-shap.initjs()
 
 
 
@@ -624,7 +623,7 @@ if submitted and model_loaded:
             clf = model
     
         # -------- SHAP Explainer --------
-        explainer = shap.Explainer(clf, input_df)
+        explainer = shap.Explainer(clf.predict_proba, input_df)
     
         shap_values = explainer(input_df)
     
