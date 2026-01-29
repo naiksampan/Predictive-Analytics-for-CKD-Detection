@@ -607,14 +607,17 @@ if submitted and model_loaded:
             st.error(f"⚠ {f} is abnormal")
     else:
         st.success("✅ No major abnormalities detected")
-    # ------------------ SHAP Visual Explanation ------------------
-    
+   # ------------------ SHAP Visual Explanation ------------------
+
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
     
     try:
-        # Model-agnostic SHAP (robust for Pipeline + sklearn + cloud)
+        # Wrap model prediction into callable function
+        def model_predict(X):
+            return model.predict_proba(X)[:, 1]
+    
         explainer = shap.Explainer(
-            model,
+            model_predict,
             input_df,
             algorithm="permutation",
             max_evals=300
@@ -634,6 +637,7 @@ if submitted and model_loaded:
     
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
+
 
 
 elif submitted and not model_loaded:
