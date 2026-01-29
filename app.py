@@ -606,47 +606,44 @@ if submitted and model_loaded:
             st.error(f"⚠ {f} is abnormal")
     else:
         st.success("✅ No major abnormalities detected")
-     # ------------------ SHAP Visual Explanation ------------------
-    
+         # ------------------ SHAP Visual Explanation ------------------
+
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
-    
+
     try:
-        # ---------- Robust probability function ----------
-        def model_predict(x):
-            return model.predict_proba(pd.DataFrame(x, columns=input_df.columns))
-    
-        # ---------- Proper background distribution ----------
-        background = shap.kmeans(input_df, 10)
-    
-        # ---------- Kernel SHAP explainer ----------
-        explainer = shap.KernelExplainer(model_predict, background)
-    
-        shap_values = explainer.shap_values(input_df, nsamples=200)
-    
-        # ---------- Safe class extraction ----------
-        if isinstance(shap_values, list):
-            shap_val = shap_values[1][0]   # CKD class
-            base_val = explainer.expected_value[1]
+        # Extract trained classifier from pipeline
+        if hasattr(model, "named_steps"):
+            # Try common classifier step names
+            for key in ['classifier', 'model', 'rf', 'estimator']:
+                if key in model.named_steps:
+                    clf = model.named_steps[key]
+                    break
+            else:
+                clf = model  # fallback
         else:
-            shap_val = shap_values[0]
-            base_val = explainer.expected_value
-    
-        # ---------- Plot ----------
+            clf = model
+
+        explainer = shap.TreeExplainer(clf)
+        shap_values = explainer.shap_values(input_df)
+
+        # Binary classification → class 1 (CKD)
+        shap_val = shap_values[1]
+
         fig, ax = plt.subplots(figsize=(9, 4))
-    
+
         shap.plots.bar(
             shap.Explanation(
-                values=shap_val,
-                base_values=base_val,
+                values=shap_val[0],
+                base_values=explainer.expected_value[1],
                 data=input_df.iloc[0],
-                feature_names=input_df.columns.tolist()
+                feature_names=input_df.columns
             ),
             max_display=12,
             show=False
         )
-    
+
         st.pyplot(fig, use_container_width=True)
-    
+
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
 
