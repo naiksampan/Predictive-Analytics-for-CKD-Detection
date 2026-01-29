@@ -611,7 +611,7 @@ if submitted and model_loaded:
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
     
     try:
-        # -------- Extract trained classifier --------
+        # -------- Extract classifier from pipeline --------
         if hasattr(model, "named_steps"):
             for key in ['classifier', 'model', 'rf', 'estimator']:
                 if key in model.named_steps:
@@ -622,28 +622,25 @@ if submitted and model_loaded:
         else:
             clf = model
     
-        # -------- SHAP Explainer --------
-        explainer = shap.Explainer(clf.predict_proba, input_df)
+        # -------- Background data (very important) --------
+        background = shap.sample(input_df, 1)
     
-        shap_values = explainer(input_df)
+        # -------- Stable SHAP explainer --------
+        explainer = shap.KernelExplainer(clf.predict_proba, background)
     
-        # -------- Select correct row --------
-        if len(shap_values.values.shape) == 3:
-            # multiclass case
-            pred_class = int(model.predict(input_df)[0])
-            shap_row = shap_values.values[0, :, pred_class]
-        else:
-            # binary / regression
-            shap_row = shap_values.values[0]
+        shap_values = explainer.shap_values(input_df, nsamples=100)
     
-        base_val = shap_values.base_values[0]
+        # -------- Select class 1 (CKD) --------
+        shap_val = shap_values[1][0]
+    
+        base_val = explainer.expected_value[1]
     
         # -------- Plot --------
         fig, ax = plt.subplots(figsize=(9, 4))
     
         shap.plots.bar(
             shap.Explanation(
-                values=shap_row,
+                values=shap_val,
                 base_values=base_val,
                 data=input_df.iloc[0],
                 feature_names=input_df.columns.tolist()
@@ -656,6 +653,7 @@ if submitted and model_loaded:
     
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
+
 
 
 
