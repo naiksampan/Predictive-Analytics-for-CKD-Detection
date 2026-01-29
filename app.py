@@ -452,11 +452,11 @@ import joblib
 
 @st.cache_resource
 def load_model():
-    return joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/ckd_model.pkl")
+    return joblib.load("data/ckd_model.pkl")
 
 @st.cache_resource
 def load_scaler():
-    return joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/clinical_scaler.pkl")
+    return joblib.load("data/clinical_scaler.pkl")
 
 try:
     model = load_model()
