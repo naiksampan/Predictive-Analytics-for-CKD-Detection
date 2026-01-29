@@ -610,25 +610,46 @@ if submitted and model_loaded:
    # ------------------ SHAP Visual Explanation ------------------
 
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
-    
+
     try:
-        # Wrap model prediction into callable function
-        def model_predict(X):
-            return model.predict_proba(X)[:, 1]
+        # -------- Extract trained classifier --------
+        if hasattr(model, "named_steps"):
+            for key in ['classifier', 'model', 'rf', 'estimator']:
+                if key in model.named_steps:
+                    clf = model.named_steps[key]
+                    break
+            else:
+                clf = model
+        else:
+            clf = model
     
-        explainer = shap.Explainer(
-            model_predict,
-            input_df,
-            algorithm="permutation",
-            max_evals=300
-        )
+        # -------- SHAP Tree Explainer --------
+        explainer = shap.TreeExplainer(clf)
+        shap_values = explainer.shap_values(input_df)
     
-        shap_values = explainer(input_df)
+        # -------- Determine predicted class --------
+        pred_class = int(model.predict(input_df)[0])
     
+        # -------- Robust SHAP value selection --------
+        if isinstance(shap_values, list):
+            shap_val = shap_values[pred_class]
+        else:
+            shap_val = shap_values
+    
+        base_val = explainer.expected_value
+        if isinstance(base_val, (list, tuple)):
+            base_val = base_val[pred_class]
+    
+        # -------- SHAP Bar Plot --------
         fig, ax = plt.subplots(figsize=(9, 4))
     
         shap.plots.bar(
-            shap_values[0],
+            shap.Explanation(
+                values=shap_val[0],
+                base_values=base_val,
+                data=input_df.iloc[0],
+                feature_names=input_df.columns
+            ),
             max_display=12,
             show=False
         )
@@ -637,6 +658,7 @@ if submitted and model_loaded:
     
     except Exception as e:
         st.warning(f"SHAP explanation unavailable: {e}")
+
 
 
 
