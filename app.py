@@ -6,8 +6,7 @@ import seaborn as sns
 import plotly.express as px
 import joblib
 import shap
-import sys
-st.write("Python version:", sys.version)
+
 
 
 
