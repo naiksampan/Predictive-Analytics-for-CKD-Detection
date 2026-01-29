@@ -611,40 +611,32 @@ if submitted and model_loaded:
     st.markdown("### 🧠 Model Explanation (SHAP Values)")
     
     try:
-        # -------- Extract classifier --------
-        if hasattr(model, "named_steps"):
-            for key in ['classifier', 'model', 'rf', 'estimator']:
-                if key in model.named_steps:
-                    clf = model.named_steps[key]
-                    break
-            else:
-                clf = model
+        # ---------- Robust probability function ----------
+        def model_predict(x):
+            return model.predict_proba(pd.DataFrame(x, columns=input_df.columns))
+    
+        # ---------- Proper background distribution ----------
+        background = shap.kmeans(input_df, 10)
+    
+        # ---------- Kernel SHAP explainer ----------
+        explainer = shap.KernelExplainer(model_predict, background)
+    
+        shap_values = explainer.shap_values(input_df, nsamples=200)
+    
+        # ---------- Safe class extraction ----------
+        if isinstance(shap_values, list):
+            shap_val = shap_values[1][0]   # CKD class
+            base_val = explainer.expected_value[1]
         else:
-            clf = model
+            shap_val = shap_values[0]
+            base_val = explainer.expected_value
     
-        # -------- SHAP Explainer --------
-        explainer = shap.Explainer(clf, input_df)
-    
-        shap_values = explainer(input_df)
-    
-        values = shap_values.values
-        base_vals = shap_values.base_values
-    
-        # -------- Robust extraction --------
-        if values.ndim == 3:
-            pred_class = int(model.predict(input_df)[0])
-            shap_row = values[0, :, pred_class]
-            base_val = base_vals[0][pred_class]
-        else:
-            shap_row = values[0]
-            base_val = base_vals[0]
-    
-        # -------- Plot --------
+        # ---------- Plot ----------
         fig, ax = plt.subplots(figsize=(9, 4))
     
         shap.plots.bar(
             shap.Explanation(
-                values=shap_row,
+                values=shap_val,
                 base_values=base_val,
                 data=input_df.iloc[0],
                 feature_names=input_df.columns.tolist()
