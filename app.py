@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 import joblib
+import shap
 
 
 # ---------------------- Page Config ----------------------
@@ -436,6 +437,218 @@ elif interaction_mode == "Clinical Interaction Plots":
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------- Deployment-Ready Prediction Interface ---------------------
+st.subheader("🩺 CKD Prediction Interface (Deployment-Ready)")
+
+st.markdown("""
+This interface allows **healthcare professionals** to input **complete patient laboratory and clinical parameters** and obtain:
+- **Binary CKD prediction (CKD / Not CKD)**
+- **Confidence probability score**
+""")
+
+# ------------------ Model & Scaler Loading ------------------
+import joblib
+
+@st.cache_resource
+def load_model():
+    return joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/ckd_model.pkl")
+
+@st.cache_resource
+def load_scaler():
+    return joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/clinical_scaler.pkl")
+
+try:
+    model = load_model()
+    clinical_scaler = load_scaler()
+    model_loaded = True
+except:
+    model_loaded = False
+    st.warning("⚠ Model or scaler not found. Please add 'ckd_model.pkl' and 'clinical_scaler.pkl'.")
+
+# ------------------ Feature List ------------------
+feature_cols = [
+    'age', 'blood_pressure', 'specific_gravity', 'albumin', 'sugar',
+    'red_blood_cells', 'pus_cell', 'pus_cell_clumps', 'bacteria',
+    'blood_glucose_random', 'blood_urea', 'serum_creatinine', 'sodium',
+    'potassium', 'haemoglobin', 'packed_cell_volume',
+    'white_blood_cell_count', 'red_blood_cell_count', 'hypertension',
+    'diabetes_mellitus', 'coronary_artery_disease', 'appetite',
+    'peda_edema', 'aanemia', 'eGFR', 'bun_creatinine_ratio',
+    'hemo_creatinine_ratio', 'ckd_severity_score', 'ckd_severity_stage',
+    'diabetes_bin', 'hypertension_bin', 'diabetes_x_glucose',
+    'age_x_creatinine', 'hypertension_x_bp', 'urea_x_creatinine',
+    'egfr_x_creatinine', 'hemo_x_creatinine', 'sodium_x_potassium',
+    'age_x_egfr', 'blood_pressure_abnormal',
+    'blood_glucose_random_abnormal', 'blood_urea_abnormal',
+    'serum_creatinine_abnormal', 'sodium_abnormal', 'potassium_abnormal',
+    'haemoglobin_abnormal', 'packed_cell_volume_abnormal',
+    'white_blood_cell_count_abnormal', 'red_blood_cell_count_abnormal',
+    'eGFR_abnormal', 'egfr_stage', 'creatinine_severity', 'urea_severity',
+    'diabetes_flag', 'hypertension_flag', 'cad_flag', 'anemia_flag',
+    'abnormality_count_score', 'weighted_severity_index'
+]
+
+# ------------------ Input Form ------------------
+# Use SCALED defaults directly (do NOT de-scale in input form)
+with st.form("ckd_prediction_form"):
+
+    inputs = {}
+    cols = st.columns(3)
+
+    for i, feat in enumerate(feature_cols):
+        with cols[i % 3]:
+            label = feat.replace('_', ' ').title()
+            if df[feat].dtype == 'object':
+                options = sorted(df[feat].dropna().unique().tolist())
+                inputs[feat] = st.selectbox(label, options)
+            else:
+                # Show scaled values directly
+                default_val = float(df[feat].median())
+                inputs[feat] = st.number_input(label, value=default_val)
+
+    submitted = st.form_submit_button("🔍 Predict CKD")
+
+# ------------------ Prediction ------------------
+if submitted and model_loaded:
+
+    input_df = pd.DataFrame([inputs])[feature_cols]
+
+    # -------- EXACT CATEGORICAL ENCODING USED IN TRAINING --------
+    categorical_cols = [
+        'red_blood_cells','pus_cell','pus_cell_clumps','bacteria',
+        'hypertension','diabetes_mellitus','coronary_artery_disease',
+        'appetite','peda_edema','aanemia','ckd_severity_stage'
+    ]
+
+    encoding_map = {
+        "normal": 1, "abnormal": 0,
+        "present": 1, "notpresent": 0,
+        "yes": 1, "no": 0,
+        "good": 1, "poor": 0,
+        "Normal": 0, "Mild": 1, "Moderate": 2, "Severe": 3, "End": 4
+    }
+
+    for col in categorical_cols:
+        input_df[col] = input_df[col].map(encoding_map)
+
+    # -------- ALIGN FEATURE ORDER --------
+    model_features = model.feature_names_in_.tolist()
+    input_df = input_df[model_features]
+
+    # -------- PREDICTION --------
+    prob = model.predict_proba(input_df)[0][1]
+    pred = int(prob >= 0.5)
+
+    # -------- RISK STRATIFICATION --------
+    if prob < 0.30:
+        risk = "🟢 Low Risk"
+        risk_color = "green"
+    elif prob < 0.60:
+        risk = "🟠 Moderate Risk"
+        risk_color = "orange"
+    else:
+        risk = "🔴 High Risk"
+        risk_color = "red"
+
+    label = "🛑 CKD Detected" if pred == 1 else "✅ Not CKD"
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Prediction", label)
+    c2.metric("Confidence", f"{prob*100:.2f}%")
+    c3.metric("Risk Category", risk)
+
+    # -------- RISK BAR --------
+    fig = px.bar(
+        x=["CKD Probability"],
+        y=[prob*100],
+        range_y=[0, 100],
+        labels={'y': 'Probability (%)', 'x': ''},
+        template='plotly_white'
+    )
+    fig.update_traces(marker_color=risk_color)
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ------------------ Highlight Key Abnormal Parameters ------------------
+
+    abnormal_cols = [
+        'blood_pressure_abnormal','blood_glucose_random_abnormal','blood_urea_abnormal',
+        'serum_creatinine_abnormal','sodium_abnormal','potassium_abnormal',
+        'haemoglobin_abnormal','packed_cell_volume_abnormal',
+        'white_blood_cell_count_abnormal','red_blood_cell_count_abnormal',
+        'eGFR_abnormal'
+    ]
+
+    abnormal_map = {
+        'blood_pressure_abnormal': 'Blood Pressure',
+        'blood_glucose_random_abnormal': 'Blood Glucose',
+        'blood_urea_abnormal': 'Blood Urea',
+        'serum_creatinine_abnormal': 'Serum Creatinine',
+        'sodium_abnormal': 'Sodium',
+        'potassium_abnormal': 'Potassium',
+        'haemoglobin_abnormal': 'Haemoglobin',
+        'packed_cell_volume_abnormal': 'Packed Cell Volume',
+        'white_blood_cell_count_abnormal': 'WBC Count',
+        'red_blood_cell_count_abnormal': 'RBC Count',
+        'eGFR_abnormal': 'eGFR'
+    }
+
+    flagged = []
+    for col in abnormal_cols:
+        if int(input_df[col].values[0]) == 1:
+            flagged.append(abnormal_map[col])
+
+    st.markdown("### 🚨 Key Abnormal Clinical Parameters")
+
+    if flagged:
+        for f in flagged:
+            st.error(f"⚠ {f} is abnormal")
+    else:
+        st.success("✅ No major abnormalities detected")
+    # ------------------ SHAP Visual Explanation ------------------
+
+    st.markdown("### 🧠 Model Explanation (SHAP Values)")
+
+    try:
+        # Extract trained classifier from pipeline
+        if hasattr(model, "named_steps"):
+            # Try common classifier step names
+            for key in ['classifier', 'model', 'rf', 'estimator']:
+                if key in model.named_steps:
+                    clf = model.named_steps[key]
+                    break
+            else:
+                clf = model  # fallback
+        else:
+            clf = model
+
+        explainer = shap.TreeExplainer(clf)
+        shap_values = explainer.shap_values(input_df)
+
+        # Binary classification → class 1 (CKD)
+        shap_val = shap_values[1]
+
+        fig, ax = plt.subplots(figsize=(9, 4))
+
+        shap.plots.bar(
+            shap.Explanation(
+                values=shap_val[0],
+                base_values=explainer.expected_value[1],
+                data=input_df.iloc[0],
+                feature_names=input_df.columns
+            ),
+            max_display=12,
+            show=False
+        )
+
+        st.pyplot(fig, use_container_width=True)
+
+    except Exception as e:
+        st.warning(f"SHAP explanation unavailable: {e}")
+
+elif submitted and not model_loaded:
+    st.error("❌ Model or scaler not loaded. Please check your files.")
+
 
 
 # ---------------------- Download Clean Data ---------------
