@@ -490,6 +490,14 @@ feature_cols = [
     'abnormality_count_score', 'weighted_severity_index'
 ]
 
+# ------------------ Create DISPLAY DF (DE-SCALED) ------------------
+scaled_numeric_cols = clinical_scaler.feature_names_in_.tolist()
+
+df_display = df.copy()
+df_display[scaled_numeric_cols] = clinical_scaler.inverse_transform(
+    df_display[scaled_numeric_cols]
+)
+
 # ------------------ Input Form ------------------
 # Use SCALED defaults directly (do NOT de-scale in input form)
 with st.form("ckd_prediction_form"):
@@ -501,11 +509,11 @@ with st.form("ckd_prediction_form"):
         with cols[i % 3]:
             label = feat.replace('_', ' ').title()
             if df[feat].dtype == 'object':
-                options = sorted(df[feat].dropna().unique().tolist())
+                options = sorted(df_display[feat].dropna().unique().tolist())
                 inputs[feat] = st.selectbox(label, options)
             else:
                 # Show scaled values directly
-                default_val = float(df[feat].median())
+                default_val = float(df_display[feat].median())
                 inputs[feat] = st.number_input(label, value=default_val)
 
     submitted = st.form_submit_button("🔍 Predict CKD")
@@ -532,6 +540,10 @@ if submitted and model_loaded:
 
     for col in categorical_cols:
         input_df[col] = input_df[col].map(encoding_map)
+
+    # -------- SCALE NUMERIC FEATURES BACK --------
+    input_df[scaled_numeric_cols] = clinical_scaler.transform(
+        input_df[scaled_numeric_cols]
 
     # -------- ALIGN FEATURE ORDER --------
     model_features = model.feature_names_in_.tolist()
