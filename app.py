@@ -543,7 +543,7 @@ if submitted and model_loaded:
 
     # -------- SCALE NUMERIC FEATURES BACK --------
     input_df[scaled_numeric_cols] = clinical_scaler.transform(
-        input_df[scaled_numeric_cols]
+        input_df[scaled_numeric_cols] )
 
     # -------- ALIGN FEATURE ORDER --------
     model_features = model.feature_names_in_.tolist()
