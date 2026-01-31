@@ -19,7 +19,7 @@ st.set_page_config(
 # ---------------------- Load Data ------------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv('data/ckd_preprocessed_data.csv')
+    return pd.read_csv('/Users/nebula/Desktop/ME/interview/Clysys/data/ckd_preprocessed_data.csv')
 
 df = load_data()
 
@@ -149,7 +149,7 @@ normal_ranges = {
 # ---------------------- Reverse Standard Scaling ---------------------
 st.markdown("### 🔄 Reverse Standard Scaling for Clinical Interpretation")
 
-scaler = joblib.load("data/clinical_scaler.pkl")
+scaler = joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/clinical_scaler.pkl")
 #scaler = StandardScaler()
 #scaler.fit(df[clinical_cols])
 
