@@ -149,7 +149,7 @@ normal_ranges = {
 # ---------------------- Reverse Standard Scaling ---------------------
 st.markdown("### 🔄 Reverse Standard Scaling for Clinical Interpretation")
 
-scaler = joblib.load("/Users/nebula/Desktop/ME/interview/Clysys/data/clinical_scaler.pkl")
+scaler = joblib.load("data/clinical_scaler.pkl")
 #scaler = StandardScaler()
 #scaler.fit(df[clinical_cols])
 
