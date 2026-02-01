@@ -2,9 +2,7 @@
 
 ## Overview
 
-**Predictive-Analytics-for-CKD-Detection** is a comprehensive machine learning and data analytics project focused on the **early detection of Chronic Kidney Disease (CKD)** using clinical and laboratory data. The project integrates advanced **data preprocessing, exploratory data analysis (EDA), statistical validation, feature engineering, and predictive modeling** to support **clinical decision-making** and improve diagnostic accuracy.
-
-The primary goal is to build a robust and interpretable analytics pipeline that identifies key biomarkers, handles real-world data challenges such as missing values and outliers, and evaluates predictive performance using clinically relevant metrics.
+This project presents an end-to-end Predictive Analytics framework for Chronic Kidney Disease (CKD) detection using clinical and laboratory data. It covers robust data handling, exploratory data analysis, clinically informed feature engineering, and advanced machine learning modeling. Multiple algorithms were evaluated using rigorous validation strategies, with ensemble models demonstrating superior performance. The framework emphasizes clinical interpretability through statistical analysis and SHAP-based explanations, enabling transparent decision support. An interactive visualization and deployment pipeline built with Streamlit supports real-time inference and risk stratification. Overall, the system is designed to be accurate, explainable, and suitable for real-world clinical decision-support applications.
 
 ---
 
@@ -58,15 +56,21 @@ pip install -r requirements.txt
 
 ## Methodology
 
-The analytical approach includes systematic **data preprocessing**, **missing value imputation**, and **clinically guided outlier treatment**. Exploratory data analysis (EDA) and **statistical hypothesis testing (t-test and Mann–Whitney U test)** are performed to identify significant biomarkers. Comorbidity analysis evaluates the impact of diabetes and hypertension on CKD progression. Feature relevance is clinically validated using **reference range comparisons and interactive visualizations**. The complete analytical workflow is detailed in **brief.pdf**, while hands-on implementation is provided in **CKD_analysis.ipynb**.
+The proposed methodology follows a structured and clinically driven machine learning pipeline for Chronic Kidney Disease (CKD) prediction. Initially, raw clinical and laboratory data were explored to understand feature distributions, missingness patterns, and data quality issues. A hybrid imputation strategy was applied, combining statistical and multivariate techniques to handle missing values while preserving clinical relationships. Outliers were identified using robust statistical methods and clinically defined thresholds, followed by winsorization to maintain pathological relevance.
+
+Comprehensive exploratory data analysis and statistical hypothesis testing were conducted to identify significant biomarkers associated with CKD. Clinically meaningful features were then engineered, including ratio-based indicators, interaction terms, abnormality flags, and aggregated severity scores. The processed dataset was used to train multiple classification models, with hyperparameters optimized via nested cross-validation to prevent data leakage.
+
+Model performance was evaluated using classification, probabilistic, and clinical metrics. Interpretability was ensured through feature importance analysis and SHAP-based explanations. Finally, the optimized model was deployed using a consistent and reproducible inference pipeline.
 
 ---
 
 ## Usage
 
-- Refer to **CKD_analysis.ipynb** for full data handling, visualization, and statistical analysis.
-- Review **brief.pdf** for conceptual explanation and solution design.
-- Website: https://predictive-analytics-for-ckd-detection-je9vzk6jyeqgow54w5cwdh.streamlit.app
+- Refer to **CKD_analysis.ipynb** for complete data handling, exploratory data analysis, visualization, and statistical validation.
+- Review **model_evaluation_validation.ipynb** for model training, performance evaluation, and prediction workflows.
+- Consult **brief.pdf** for the conceptual explanation, methodology, and overall solution design.
+- Explore the deployed application here:  
+  **Website:** https://predictive-analytics-for-ckd-detection-je9vzk6jyeqgow54w5cwdh.streamlit.app
 
 ---
 
