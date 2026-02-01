@@ -45,9 +45,12 @@ pip install -r requirements.txt
 
 ```
 .
-├── CKD_analysis.ipynb   # Data preprocessing, EDA, and statistical analysis
-├── brief.pdf            # Solution approach and methodology
-├── requirements.txt     # Project dependencies
+├── CKD_analysis.ipynb                # Data preprocessing, EDA, and statistical analysis
+├── model_evaluation_validation.ipynb # Modeling, Evalaution and Prediction
+├── Future_scope.ipynb                # Hybrid Unsuperived Learning with RUL analysis
+├── app.py                            # Streamlit application
+├── brief.pdf                         # Solution approach and methodology
+├── requirements.txt                  # Project dependencies
 └── README.md
 ```
 
