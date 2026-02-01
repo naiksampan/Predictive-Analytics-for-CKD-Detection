@@ -35,14 +35,14 @@ num_cols = df.select_dtypes(include=np.number).columns.tolist()
 cat_cols = df.select_dtypes(exclude=np.number).columns.tolist()
 
 # ---------------------- Main Title ------------------------
-st.title("🩺 Chronic Kidney Disease – Data Analytics & Visualization Dashboard")
+st.title("Chronic Kidney Disease")
 st.markdown("""
 This dashboard provides **publication-quality visualizations** and **interactive analytics**
 for Chronic Kidney Disease (CKD) detection and clinical feature analysis.
 """)
 
 # ---------------------- Dataset Overview ------------------
-st.subheader("📊 Dataset Overview")
+st.subheader("Dataset Overview")
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Total Records", df.shape[0])
@@ -52,7 +52,7 @@ c3.metric("Target Column", TARGET)
 st.dataframe(df.head(), use_container_width=True)
 
 # ---------------------- Target Distribution ----------------
-st.subheader("🎯 Target Distribution")
+st.subheader("Target Distribution")
 
 fig_target = px.histogram(
     df, x=TARGET, color=TARGET,
@@ -62,7 +62,7 @@ fig_target = px.histogram(
 st.plotly_chart(fig_target, use_container_width=True)
 
 # ---------------------- Feature Distributions --------------
-st.subheader("📈 Feature Distributions")
+st.subheader("Feature Distributions")
 
 selected_feature = st.selectbox("Select Numerical Feature", num_cols)
 
@@ -74,7 +74,7 @@ fig_dist = px.histogram(
 st.plotly_chart(fig_dist, use_container_width=True)
 
 # ---------------------- Correlation Heatmap ----------------
-st.subheader("🔗 Correlation Heatmap")
+st.subheader("Correlation Heatmap")
 
 corr = df[num_cols].corr()
 
@@ -87,7 +87,7 @@ ax.set_title("Feature Correlation Matrix", fontsize=14)
 st.pyplot(fig)
 
 # ---------------------- Pairwise Scatter -------------------
-st.subheader("📌 Feature Relationship Analysis")
+st.subheader("Feature Relationship Analysis")
 
 x_axis = st.selectbox("X-axis Feature", num_cols, index=0)
 y_axis = st.selectbox("Y-axis Feature", num_cols, index=1)
@@ -100,7 +100,7 @@ fig_scatter = px.scatter(
 st.plotly_chart(fig_scatter, use_container_width=True)
 
 # ---------------------- Boxplot Analysis -------------------
-st.subheader("📦 Feature vs Target Boxplots")
+st.subheader("Feature vs Target Boxplots")
 
 box_feature = st.selectbox("Select Feature for Boxplot", num_cols, index=2)
 
@@ -113,7 +113,7 @@ st.plotly_chart(fig_box, use_container_width=True)
 
 # ---------------------- Clinical Focus ---------------------
 # Normal ranges mapped EXACTLY to dataset columns
-st.subheader("🩺 Patient Clinical Profiles with Normal Range Overlays")
+st.subheader("Patient Clinical Profiles with Normal Range Overlays")
 
 scaler_cols = [
     'age','blood_pressure','blood_glucose_random','blood_urea',
@@ -147,7 +147,7 @@ normal_ranges = {
 }
 
 # ---------------------- Reverse Standard Scaling ---------------------
-st.markdown("### 🔄 Reverse Standard Scaling for Clinical Interpretation")
+st.markdown("### Reverse Standard Scaling for Clinical Interpretation")
 
 scaler = joblib.load("data/clinical_scaler.pkl")
 #scaler = StandardScaler()
@@ -221,7 +221,7 @@ dev_df['Status'] = np.where(
     np.where(dev_df['Patient Value'] > dev_df['High Normal'], 'High', 'Normal')
 )
 
-st.markdown("### 🚦 Parameter Deviation Summary")
+st.markdown("### Parameter Deviation Summary")
 st.dataframe(
     dev_df[['Feature', 'Patient Value', 'Low Normal', 'High Normal', 'Status']],
     use_container_width=True
@@ -246,7 +246,7 @@ fig_radar.update_traces(fill='toself')
 st.plotly_chart(fig_radar, use_container_width=True)
 
 # ---------------------- Disease Probability & Risk Scoring ---------------------
-st.subheader("🧠 Disease Probability & Risk Stratification")
+st.subheader(" Disease Probability & Risk Stratification")
 
 # Use weighted severity index if available, else fallback to abnormality score
 if 'weighted_severity_index' in df_unscaled.columns:
@@ -298,7 +298,7 @@ fig_prob.update_traces(marker_color='crimson')
 st.plotly_chart(fig_prob, use_container_width=True)
 
 # ---------------------- Key Biomarkers Driving Predictions ---------------------
-st.subheader("🔬 Key Biomarkers Driving Predictions (Color-coded by Impact)")
+st.subheader("Key Biomarkers Driving Predictions")
 
 # Encode target if categorical (e.g., 'ckd', 'notckd')
 if df[TARGET].dtype == 'object':
@@ -347,7 +347,7 @@ st.plotly_chart(fig_imp, use_container_width=True)
 st.caption("Impact computed using absolute Pearson correlation with encoded target variable (model-agnostic explainability proxy).")
 
 # ---------------------- Biomarker Interaction Patterns ---------------------
-st.subheader("🧩 Biomarker Interaction Patterns")
+st.subheader("Biomarker Interaction Patterns")
 
 st.markdown("""
 Understanding **interactions between biomarkers** helps reveal **non-linear disease mechanisms**
@@ -412,7 +412,7 @@ elif interaction_mode == "Top Interaction Heatmap":
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### 🔝 Strongest Biomarker Interactions")
+    st.markdown("### Strongest Biomarker Interactions")
     st.dataframe(top_pairs.reset_index().rename(
         columns={'level_0':'Biomarker 1', 'level_1':'Biomarker 2', 0:'Interaction Strength'}
     ), use_container_width=True)
@@ -440,7 +440,7 @@ elif interaction_mode == "Clinical Interaction Plots":
     st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------- Deployment-Ready Prediction Interface ---------------------
-st.subheader("🩺 CKD Prediction Interface (Deployment-Ready)")
+st.subheader("CKD Prediction Interface")
 
 st.markdown("""
 This interface allows **healthcare professionals** to input **complete patient laboratory and clinical parameters** and obtain:
@@ -516,7 +516,7 @@ with st.form("ckd_prediction_form"):
                 default_val = float(df_display[feat].median())
                 inputs[feat] = st.number_input(label, value=default_val)
 
-    submitted = st.form_submit_button("🔍 Predict CKD")
+    submitted = st.form_submit_button("Predict CKD")
 
 # ------------------ Prediction ------------------
 if submitted and model_loaded:
@@ -611,7 +611,7 @@ if submitted and model_loaded:
         if int(input_df[col].values[0]) == 1:
             flagged.append(abnormal_map[col])
 
-    st.markdown("### 🚨 Key Abnormal Clinical Parameters")
+    st.markdown("### Key Abnormal Clinical Parameters")
 
     if flagged:
         for f in flagged:
@@ -620,7 +620,7 @@ if submitted and model_loaded:
         st.success("✅ No major abnormalities detected")
          # ------------------ SHAP Visual Explanation ------------------
 
-    st.markdown("### 🧠 Model Explanation (SHAP Values)")
+    st.markdown("### Model Explanation (SHAP Values)")
 
     try:
         # Extract trained classifier from pipeline
